@@ -110,14 +110,13 @@ def extract_score_number(url):
     match = re.search(r'score_(\d+)', url)
     return int(match.group(1)) if match else None
 
-# Filter URLs that follow score_X naming convention and sort by score number
+# Filter URLs that follow score_x naming convention and sort by score number
 score_pages = []
 for url in seen_pages:
     score_num = extract_score_number(url)
     if score_num is not None:
         score_pages.append((score_num, url))
 
-# Sort by score number
 score_pages.sort(key=lambda x: x[0])
 sorted_svg_list = [url for _, url in score_pages]
 
