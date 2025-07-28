@@ -105,6 +105,9 @@ for _ in range(max_scrolls):
 
 driver.quit()
 
+filename = input("Enter file name: ")
+exportsvg(list(seen_pages), output_filename=f"{filename}.pdf")
+
 
 
 
