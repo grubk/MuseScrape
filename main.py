@@ -38,11 +38,10 @@ def exportsvg(svg_list, output_filename="output.pdf"):
                 response = requests.get(svg_url, headers=headers)
                 response.raise_for_status()
                 
-                # Parse SVG content with svglib
+                # Parse SVG content
                 svg_content = response.content
                 drawing = svg2rlg(io.BytesIO(svg_content))
                 
-                # Scale drawing to fit letter size
                 if drawing:
                     scale_x = width / drawing.width if drawing.width > 0 else 1
                     scale_y = height / drawing.height if drawing.height > 0 else 1
@@ -50,7 +49,7 @@ def exportsvg(svg_list, output_filename="output.pdf"):
                     
                     drawing.scale(scale, scale)
                 
-                # Render the SVG drawing directly onto the PDF canvas
+
                 renderPDF.draw(drawing, c, 0, 0)
                 
             if i < len(svg_list) - 1:
@@ -68,13 +67,13 @@ driver = None
 
 if browser_choice == "chrome":
     options = webdriver.ChromeOptions()
-    # options.add_argument("--headless")  # Comment/disable to see browser actions
+    options.add_argument("--headless")  #Comment/disable to see browser actions
     options.add_argument("--disable-gpu")
     driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
 
 elif browser_choice == "firefox":
     options = webdriver.FirefoxOptions()
-    # options.add_argument("--headless")  # Comment/disable to see browser actions
+    options.add_argument("--headless")  # Comment/disable to see browser actions
     driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
 
 else:
@@ -83,7 +82,7 @@ else:
 
 url = input("Input URL: ").strip()
 driver.get(url)
-time.sleep(5)  # Wait for page load
+time.sleep(5)
 
 seen_pages = set()
 scroll_pause = 1.0
@@ -127,7 +126,7 @@ print(f"Found {len(sorted_svg_list)} score pages")
 filename = input("Enter file name: ")
 exportsvg(sorted_svg_list, output_filename=f"{filename}.pdf")
 
-print([url for _, url in score_pages])
+# print([url for _, url in score_pages]) #If you want to see the individual urls of svg files in terminal
 
 
 
