@@ -6,17 +6,21 @@ from webdriver_manager.firefox import GeckoDriverManager
 from selenium.webdriver.common.by import By
 import time
 from bs4 import BeautifulSoup
-import matplotlib.pyplot as plt
-import matplotlib.image as mpimg
-from matplotlib.patches import Rectangle
 import requests
 from reportlab.pdfgen import canvas
 from reportlab.lib.pagesizes import letter
-from PIL import Image
+from reportlab.graphics import renderPDF
+from svglib.svglib import svg2rlg
 import io
+import re
 import os
 
 def exportsvg(svg_list, output_filename="output.pdf"):
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+        'Referer': 'https://musescore.com/',
+        'Accept': 'image/svg+xml,image/*,*/*'
+    }
     if not svg_list:
         print("No SVG data provided")
         return
@@ -30,71 +34,25 @@ def exportsvg(svg_list, output_filename="output.pdf"):
     
     for i, svg_url in enumerate(svg_list):
         try:
-            # Download SVG content if it's a URL
             if svg_url.startswith('http'):
-                response = requests.get(svg_url)
+                response = requests.get(svg_url, headers=headers)
+                response.raise_for_status()
+                
+                # Parse SVG content with svglib
                 svg_content = response.content
-            else:
-                svg_content = svg_url.encode('utf-8')
-            
-            # Create a temporary SVG file
-            temp_svg_path = f"temp_page_{i}.svg"
-            with open(temp_svg_path, 'wb') as f:
-                f.write(svg_content)
-            
-            # Use matplotlib to render SVG and save as PNG
-            fig, ax = plt.subplots(figsize=(8.5, 11), dpi=150)
-            ax.axis('off')
-            
-            # Read and display the SVG
-            try:
-                # For SVG files, we need to use a different approach
-                # Convert to PNG using matplotlib's SVG support
-                temp_png_path = f"temp_page_{i}.png"
+                drawing = svg2rlg(io.BytesIO(svg_content))
                 
-                # Use matplotlib to save the figure as PNG
-                plt.savefig(temp_png_path, bbox_inches='tight', dpi=150, 
-                           facecolor='white', edgecolor='none')
-                plt.close()
-                
-                # Read the PNG and add to PDF
-                img = Image.open(temp_png_path)
-                img_width, img_height = img.size
-                
-                # Scale to fit page if necessary
-                scale = min(width/img_width, height/img_height, 1.0)
-                scaled_width = img_width * scale
-                scaled_height = img_height * scale
-                
-                x = (width - scaled_width) / 2
-                y = (height - scaled_height) / 2
-                
-                c.drawImage(temp_png_path, x, y, width=scaled_width, height=scaled_height)
-                
-                # Clean up temporary files
-                os.remove(temp_svg_path)
-                os.remove(temp_png_path)
-                
-            except Exception as svg_error:
-                print(f"Error rendering SVG {i} with matplotlib: {svg_error}")
-                # Fallback: if it's an image URL, try to download directly
-                if svg_url.startswith('http'):
-                    response = requests.get(svg_url)
-                    img = Image.open(io.BytesIO(response.content))
-                    temp_png_path = f"temp_page_{i}.png"
-                    img.save(temp_png_path)
+                # Scale drawing to fit letter size
+                if drawing:
+                    scale_x = width / drawing.width if drawing.width > 0 else 1
+                    scale_y = height / drawing.height if drawing.height > 0 else 1
+                    scale = min(scale_x, scale_y)
                     
-                    img_width, img_height = img.size
-                    scale = min(width/img_width, height/img_height, 1.0)
-                    scaled_width = img_width * scale
-                    scaled_height = img_height * scale
-                    
-                    x = (width - scaled_width) / 2
-                    y = (height - scaled_height) / 2
-                    
-                    c.drawImage(temp_png_path, x, y, width=scaled_width, height=scaled_height)
-                    os.remove(temp_png_path)
-            
+                    drawing.scale(scale, scale)
+                
+                # Render the SVG drawing directly onto the PDF canvas
+                renderPDF.draw(drawing, c, 0, 0)
+                
             if i < len(svg_list) - 1:
                 c.showPage()
                 
@@ -148,15 +106,28 @@ for _ in range(max_scrolls):
 
 driver.quit()
 
-filename = input("Enter file name: ")
-exportsvg(list(seen_pages), output_filename=f"{filename}.pdf")
-driver.execute_script("arguments[0].scrollTop += arguments[1];", scroller, scroll_step)
-time.sleep(scroll_pause)
+# Filter and sort SVGs by score number
+def extract_score_number(url):
+    match = re.search(r'score_(\d+)', url)
+    return int(match.group(1)) if match else None
 
-driver.quit()
+# Filter URLs that follow score_X naming convention and sort by score number
+score_pages = []
+for url in seen_pages:
+    score_num = extract_score_number(url)
+    if score_num is not None:
+        score_pages.append((score_num, url))
+
+# Sort by score number
+score_pages.sort(key=lambda x: x[0])
+sorted_svg_list = [url for _, url in score_pages]
+
+print(f"Found {len(sorted_svg_list)} score pages")
 
 filename = input("Enter file name: ")
-exportsvg(list(seen_pages), output_filename=f"{filename}.pdf")
+exportsvg(sorted_svg_list, output_filename=f"{filename}.pdf")
+
+print([url for _, url in score_pages])
 
 
 
