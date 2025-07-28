@@ -1,6 +1,6 @@
 # 🎶MuseScrape
 
-A python web scraper that takes a MuseScore sheet from a url, and converts it to .pdf format directly.
+A python web scraper that extracts a printable pdf of sheet music on MuseScore.
 
 ---
 ### 🔧Installation
