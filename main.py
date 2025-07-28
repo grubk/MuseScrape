@@ -18,8 +18,10 @@ def exportsvg(svg_list, output_filename="output.pdf"):
         print("No SVG data provided")
         return
     
-
-    pdf_path = os.path.join(os.path.dirname(__file__), output_filename)
+    outputs_dir = os.path.join(os.path.dirname(__file__), "outputs")
+    os.makedirs(outputs_dir, exist_ok=True)
+    
+    pdf_path = os.path.join(outputs_dir, output_filename)
     c = canvas.Canvas(pdf_path, pagesize=letter)
     width, height = letter
     
@@ -102,6 +104,8 @@ for _ in range(max_scrolls):
     time.sleep(scroll_pause)
 
 driver.quit()
+
+
 
 
 
