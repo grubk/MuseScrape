@@ -8,10 +8,57 @@ import time
 from bs4 import BeautifulSoup
 import cairosvg
 from reportlab.pdfgen import canvas
-from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib.pagesizes import letter
 from PIL import Image
 import io
 import os
+
+def exportsvg(svg_list, output_filename="output.pdf"):
+    if not svg_list:
+        print("No SVG data provided")
+        return
+    
+
+    pdf_path = os.path.join(os.path.dirname(__file__), output_filename)
+    c = canvas.Canvas(pdf_path, pagesize=letter)
+    width, height = letter
+    
+    for i, svg_content in enumerate(svg_list):
+        try:
+            
+            png_data = cairosvg.svg2png(bytestring=svg_content.encode('utf-8'))
+            img = Image.open(io.BytesIO(png_data))
+            
+            
+            temp_path = f"temp_page_{i}.png"
+            img.save(temp_path)
+            
+            
+            img_width, img_height = img.size
+            scale_x = width / img_width
+            scale_y = height / img_height
+            scale = min(scale_x, scale_y)
+            
+            
+            scaled_width = img_width * scale
+            scaled_height = img_height * scale
+            x = (width - scaled_width) / 2
+            y = (height - scaled_height) / 2
+            
+            c.drawImage(temp_path, x, y, width=scaled_width, height=scaled_height)
+            
+            os.remove(temp_path)
+            
+            if i < len(svg_list) - 1:
+                c.showPage()
+                
+        except Exception as e:
+            print(f"Error processing SVG {i}: {e}")
+            continue
+    
+    
+    c.save()
+    print(f"PDF saved as: {pdf_path}")
 
 browser_choice = input("Select browser (chrome/firefox): ").strip().lower()
 driver = None
@@ -56,59 +103,5 @@ for _ in range(max_scrolls):
 
 driver.quit()
 
-#print(list(seen_pages))
 
-def exportsvg(svg_list, output_filename="output.pdf"):
-    """
-    Convert a list of SVG strings to a multi-page PDF
-    """
-    if not svg_list:
-        print("No SVG data provided")
-        return
-    
-    # Create PDF canvas
-    pdf_path = os.path.join(os.path.dirname(__file__), output_filename)
-    c = canvas.Canvas(pdf_path, pagesize=A4)
-    width, height = A4
-    
-    for i, svg_content in enumerate(svg_list):
-        try:
-            # Convert SVG to PNG using cairosvg
-            png_data = cairosvg.svg2png(bytestring=svg_content.encode('utf-8'))
-            
-            # Open PNG with PIL
-            img = Image.open(io.BytesIO(png_data))
-            
-            # Save as temporary file for reportlab
-            temp_path = f"temp_page_{i}.png"
-            img.save(temp_path)
-            
-            # Calculate scaling to fit page
-            img_width, img_height = img.size
-            scale_x = width / img_width
-            scale_y = height / img_height
-            scale = min(scale_x, scale_y)
-            
-            # Calculate centered position
-            scaled_width = img_width * scale
-            scaled_height = img_height * scale
-            x = (width - scaled_width) / 2
-            y = (height - scaled_height) / 2
-            
-            # Draw image on PDF
-            c.drawImage(temp_path, x, y, width=scaled_width, height=scaled_height)
-            
-            # Clean up temp file
-            os.remove(temp_path)
-            
-            # Add new page if not the last SVG
-            if i < len(svg_list) - 1:
-                c.showPage()
-                
-        except Exception as e:
-            print(f"Error processing SVG {i}: {e}")
-            continue
-    
-    # Save PDF
-    c.save()
-    print(f"PDF saved as: {pdf_path}")
+
