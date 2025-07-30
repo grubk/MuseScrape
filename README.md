@@ -23,7 +23,7 @@ A python web scraper that creates a printable pdf of sheet music on MuseScore.
 ### 📖How To Use
 
 1. Run the file
-2. Enter prompted information into the terminal (browser, url in format: https://musescore.com/user/{numbers}/scores/{numbers})
+2. Enter prompted information into the terminal (browser, url in format: `https://musescore.com/user/{numbers}/scores/{numbers}`)
 3. Name the file (Do not include .pdf at the end of your input, this is already appended in the program)
 4. Once the script finishes, check **outputs** folder for your sheet music
 ---
