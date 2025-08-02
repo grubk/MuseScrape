@@ -38,5 +38,5 @@ A python web scraper that creates a printable pdf of sheet music on MuseScore.
 Using standard BeautifulSoup4 web scraping did not initially work for the MuseScore site, since sheet music was contained in a scrollable div that only displays the active page of sheet music in the page's html file.  
 I had to use selenium to open an instance of a browser and then scroll within this div, extracting each page of sheet music as the script scrolls down.
   
-The pages of sheet music are stored in .svg format on MuseScore's end, so I had to scale them to letter size, so they would fit in a printable pdf.
-The svgs are sorted in order by the script, and each svg converted and given a new page on a .pdf file which is then downloaded by the user.
+The pages of sheet music are stored in svg format on MuseScore's end. I had to scale them to letter size, so they would fit in a printable pdf.
+The svgs are sorted by the script, and then converted and given a new page on a .pdf file which is then downloaded onto the user's machine in the outputs folder.
